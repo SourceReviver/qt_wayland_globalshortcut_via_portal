@@ -33,7 +33,7 @@ wayland_shortcut(QWindow* w)
   qDebug() << "Return from create session ->" << c;
 
   QDBusConnection::sessionBus().connect(
-    QString(),
+    "org.freedesktop.portal.Desktop",
     response_handle.path(),
     QLatin1String("org.freedesktop.portal.Request"),
     QLatin1String("Response"),
@@ -53,14 +53,22 @@ wayland_shortcut::list_shortcuts()
   QList<QVariant> args_list_shotcuts;
   args_list_shotcuts.append(QVariant::fromValue(session_obj_path));
   QMap<QString, QVariant> options_list_shortcut;
-  options_list_shortcut.insert("handle_token", "What_should_be_in_here123");
+  options_list_shortcut.insert("handle_token", handle_token);
 
   args_list_shotcuts.append(options_list_shortcut);
 
   list_shortcut.setArguments(args_list_shotcuts);
 
   QDBusMessage list_ret = QDBusConnection::sessionBus().call(list_shortcut);
-  qDebug() << list_ret;
+  qDebug() << "list_shortcuts message return ->" << list_ret;
+
+  QDBusConnection::sessionBus().connect(
+    "org.freedesktop.portal.Desktop",
+    list_ret.arguments().first().value<QDBusObjectPath>().path(),
+    QLatin1String("org.freedesktop.portal.Request"),
+    QLatin1String("Response"),
+    this,
+    SLOT(process_list_shortcuts_response(uint, QVariantMap)));
 }
 
 QString
@@ -84,14 +92,12 @@ wayland_shortcut::process_create_session_response(uint i,
   };
 
   QDBusConnection::sessionBus().disconnect(
-    QString(),
+    "org.freedesktop.portal.Desktop",
     response_handle.path(),
     QLatin1String("org.freedesktop.portal.Request"),
     QLatin1String("Response"),
     this,
     SLOT(process_create_session_response(uint, QVariantMap)));
-
-  this->list_shortcuts();
 
   QDBusMessage bind_shortcut =
     QDBusMessage::createMethodCall("org.freedesktop.portal.Desktop",
@@ -102,10 +108,8 @@ wayland_shortcut::process_create_session_response(uint i,
   QList<QVariant> bind_shortcut_args;
   bind_shortcut_args.append(session_obj_path);
 
-  // a(sa{sv})
-  using Shortcuts = QList<QPair<QString, QVariantMap>>;
-
   Shortcuts shortcuts;
+
   qDBusRegisterMetaType<std::pair<QString, QVariantMap>>();
   qDBusRegisterMetaType<Shortcuts>();
 
@@ -145,7 +149,7 @@ wayland_shortcut::process_create_session_response(uint i,
   qDebug() << "input of bind->" << bind_shortcut.arguments();
 
   QDBusMessage bind_ret = QDBusConnection::sessionBus().call(bind_shortcut);
-  qDebug() << bind_ret;
+  qDebug() << "bind message return->" << bind_ret;
 
   // process signals
 
@@ -157,6 +161,22 @@ wayland_shortcut::process_create_session_response(uint i,
     this,
     SLOT(process_activated_signal(
       QDBusObjectPath, QString, qulonglong, QVariantMap)));
+
+  this->list_shortcuts();
+}
+
+void
+wayland_shortcut::process_list_shortcuts_response(uint,
+                                                  const QVariantMap& results)
+{
+  const auto arg = results["shortcuts"].value<QDBusArgument>();
+  Shortcuts s;
+  arg >> s;
+  for (auto it = s.cbegin(), itEnd = s.cend(); it != itEnd; ++it) {
+    qDebug() << "Registered shortcuts: " << it->first
+             << it->second["description"].toString()
+             << it->second["trigger_description"].toString();
+  }
 }
 
 void

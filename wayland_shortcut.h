@@ -2,6 +2,11 @@
 #include <QObject>
 #include <QtDBus/QtDBus>
 
+// a(sa{sv})
+using Shortcuts = QList<QPair<QString, QVariantMap>>;
+
+Q_DECLARE_METATYPE(Shortcuts)
+
 class QWindow;
 
 class wayland_shortcut : public QObject
@@ -15,6 +20,7 @@ public:
 
 public Q_SLOTS:
   void process_create_session_response(uint, const QVariantMap& results);
+  void process_list_shortcuts_response(uint, const QVariantMap& results);
   void process_activated_signal(const QDBusObjectPath& session_handle,
                                 const QString& shortcut_id,
                                 qulonglong timestamp,
