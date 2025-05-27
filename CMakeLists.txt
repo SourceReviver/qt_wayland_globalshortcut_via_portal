@@ -38,3 +38,5 @@ target_link_libraries(wayland_global_shortcut
 )
 
 target_include_directories(wayland_global_shortcut PRIVATE ${CMAKE_BINARY_DIR})
+
+install(TARGETS wayland_global_shortcut DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

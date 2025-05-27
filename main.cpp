@@ -9,7 +9,7 @@ int
 main(int argc, char* argv[])
 {
   QApplication a(argc, argv);
-  QApplication::setApplicationName("TheAppName");
+  QApplication::setApplicationName("wayland_global_shortcut");
   QApplication::setOrganizationDomain("org.nice");
 
   auto* btn = new QPushButton("useless button");
