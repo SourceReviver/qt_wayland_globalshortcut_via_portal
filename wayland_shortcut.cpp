@@ -1,6 +1,7 @@
 #include "wayland_shortcut.h"
 
-#include <private/qgenericunixservices_p.h>
+#include <private/qdesktopunixservices_p.h>
+// was #include <private/qgenericunixservices_p.h>
 #include <private/qguiapplication_p.h>
 #include <qpa/qplatformintegration.h>
 
@@ -75,10 +76,13 @@ QString
 wayland_shortcut::obtain_protol_window_handler(QWindow* w)
 {
   // TODO: Private API could be gone
-  if (const auto services = dynamic_cast<QGenericUnixServices*>(
+  if (const auto services = dynamic_cast<QDesktopUnixServices*>(
         QGuiApplicationPrivate::platformIntegration()->services())) {
-    return services->portalWindowIdentifier(w).toUtf8().constData();
+    QString ret =  services->portalWindowIdentifier(w);
+    qDebug()<< "portalWindowIdentifier is -> " << ret;
+    return ret;
   }
+  exit(1);
 }
 
 void
@@ -105,8 +109,6 @@ wayland_shortcut::process_create_session_response(uint i,
                                    "org.freedesktop.portal.GlobalShortcuts",
                                    "BindShortcuts");
 
-  QList<QVariant> bind_shortcut_args;
-  bind_shortcut_args.append(session_obj_path);
 
   Shortcuts shortcuts;
 
@@ -135,17 +137,17 @@ wayland_shortcut::process_create_session_response(uint i,
   shortcuts.append(a_shortcut);
   shortcuts.append(b_shortcut);
 
-  bind_shortcut_args.append(QVariant::fromValue(shortcuts));
-  bind_shortcut_args.append(
-    protol_window_handler_id); // Wayland window id, could be empty for now??
-                               // (useless so far)
-
   QMap<QString, QVariant> bind_opts;
   bind_opts.insert("handle_token", handle_token);
 
-  bind_shortcut_args.append(bind_opts);
 
+  QList<QVariant> bind_shortcut_args;
+  bind_shortcut_args.append(session_obj_path);
+  bind_shortcut_args.append(QVariant::fromValue(shortcuts));
+  bind_shortcut_args.append(protol_window_handler_id);
+  bind_shortcut_args.append(bind_opts);
   bind_shortcut.setArguments(bind_shortcut_args);
+
   qDebug() << "input of bind->" << bind_shortcut.arguments();
 
   QDBusMessage bind_ret = QDBusConnection::sessionBus().call(bind_shortcut);
