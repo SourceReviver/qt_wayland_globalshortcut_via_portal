@@ -2,6 +2,10 @@
 
 Minimum code to uses it.
 
-(Code is horrible for now)
+As of 2025 July, 
 
-As of 2024-03-15, only KDE & hyprland supports it.
++ only KDE supports with questionable usability.
++ GNOME48 claim to support it, but not really.
++ So, it is not usable.
+
+ref: https://github.com/slbtty/qt_wayland_globalshortcut_via_portal/wiki

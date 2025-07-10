@@ -1,5 +1,5 @@
 #pragma once
-#include <QObject>
+#include "my_xdg_exported.h"
 #include <QtDBus/QtDBus>
 
 // a(sa{sv})
@@ -9,12 +9,13 @@ Q_DECLARE_METATYPE(Shortcuts)
 
 class QWindow;
 
+
 class wayland_shortcut : public QObject
 {
   Q_OBJECT
 
 public:
-  wayland_shortcut(QWindow* w);
+  wayland_shortcut(QWindow* qwindow);
 
   void list_shortcuts();
 
@@ -32,6 +33,6 @@ private:
 
   QDBusObjectPath response_handle;
   QDBusObjectPath session_obj_path;
-  QString protol_window_handler_id;
-  QString obtain_protol_window_handler(QWindow*);
+  MyXdgExporter * myXdgExporter;
+  my_xdg_exported * myXdgExported;
 };

@@ -1,16 +1,13 @@
 #include "wayland_shortcut.h"
-
-#include <private/qdesktopunixservices_p.h>
-// was #include <private/qgenericunixservices_p.h>
-#include <private/qguiapplication_p.h>
-#include <qpa/qplatformintegration.h>
-
 #include <QtDBus/QtDBus>
 
-wayland_shortcut::
-wayland_shortcut(QWindow* w)
+
+
+wayland_shortcut::wayland_shortcut(QWindow* qwindow)
 {
-  protol_window_handler_id = obtain_protol_window_handler(w);
+  myXdgExporter= new MyXdgExporter();
+  myXdgExported = myXdgExporter->exportWindow(qwindow);
+
 
   QDBusMessage create_session =
     QDBusMessage::createMethodCall("org.freedesktop.portal.Desktop",
@@ -72,18 +69,7 @@ wayland_shortcut::list_shortcuts()
     SLOT(process_list_shortcuts_response(uint, QVariantMap)));
 }
 
-QString
-wayland_shortcut::obtain_protol_window_handler(QWindow* w)
-{
-  // TODO: Private API could be gone
-  if (const auto services = dynamic_cast<QDesktopUnixServices*>(
-        QGuiApplicationPrivate::platformIntegration()->services())) {
-    QString ret =  services->portalWindowIdentifier(w);
-    qDebug()<< "portalWindowIdentifier is -> " << ret;
-    return ret;
-  }
-  exit(1);
-}
+
 
 void
 wayland_shortcut::process_create_session_response(uint i,
@@ -144,7 +130,7 @@ wayland_shortcut::process_create_session_response(uint i,
   QList<QVariant> bind_shortcut_args;
   bind_shortcut_args.append(session_obj_path);
   bind_shortcut_args.append(QVariant::fromValue(shortcuts));
-  bind_shortcut_args.append(protol_window_handler_id);
+  bind_shortcut_args.append(myXdgExported->m_handle);
   bind_shortcut_args.append(bind_opts);
   bind_shortcut.setArguments(bind_shortcut_args);
 

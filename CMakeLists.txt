@@ -10,17 +10,16 @@ find_package(Qt6 COMPONENTS
         Gui
         Widgets
         DBus
+        WaylandClient
         REQUIRED)
-
-set(THE_SRC
-        main.cpp
-        wayland_shortcut.cpp
-        wayland_shortcut.h
-)
 
 qt_standard_project_setup()
 
-add_executable(wayland_global_shortcut ${THE_SRC})
+add_executable(wayland_global_shortcut
+        main.cpp
+        wayland_shortcut.cpp
+        my_xdg_exported.cpp
+)
 target_link_libraries(wayland_global_shortcut
         Qt::Core
         Qt::Gui
@@ -28,5 +27,10 @@ target_link_libraries(wayland_global_shortcut
         Qt::DBus
         Qt::CorePrivate
         Qt::WidgetsPrivate
+        Qt::WaylandClient
 )
 
+qt_generate_wayland_protocol_client_sources(
+        wayland_global_shortcut
+        PUBLIC_CODE
+        FILES "/usr/share/wayland-protocols/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml")
