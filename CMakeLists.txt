@@ -30,7 +30,13 @@ target_link_libraries(wayland_global_shortcut
         Qt::WaylandClient
 )
 
+
+target_include_directories(wayland_global_shortcut PRIVATE ${CMAKE_BINARY_DIR})
+
+install(TARGETS wayland_global_shortcut DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+
 qt_generate_wayland_protocol_client_sources(
         wayland_global_shortcut
         PUBLIC_CODE
         FILES "/usr/share/wayland-protocols/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml")
+
