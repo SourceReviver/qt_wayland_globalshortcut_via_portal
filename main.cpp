@@ -11,7 +11,7 @@ main(int argc, char* argv[])
   QApplication a(argc, argv);
   QApplication::setApplicationName("wayland_global_shortcut");
   QApplication::setOrganizationDomain("org.nice");
-
+  QApplication::setDesktopFileName("org.kde.dolphin"); // useless
   auto* btn = new QPushButton("useless button");
   btn->show();
   btn->windowHandle()->setTitle("useless title");

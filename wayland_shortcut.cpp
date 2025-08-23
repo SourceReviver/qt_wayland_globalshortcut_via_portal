@@ -1,15 +1,13 @@
 #include "wayland_shortcut.h"
-
-#include <private/qgenericunixservices_p.h>
-#include <private/qguiapplication_p.h>
-#include <qpa/qplatformintegration.h>
-
 #include <QtDBus/QtDBus>
 
-wayland_shortcut::
-wayland_shortcut(QWindow* w)
+
+
+wayland_shortcut::wayland_shortcut(QWindow* qwindow)
 {
-  protol_window_handler_id = obtain_protol_window_handler(w);
+  myXdgExporter= new MyXdgExporter();
+  myXdgExported = myXdgExporter->exportWindow(qwindow);
+
 
   QDBusMessage create_session =
     QDBusMessage::createMethodCall("org.freedesktop.portal.Desktop",
@@ -71,15 +69,7 @@ wayland_shortcut::list_shortcuts()
     SLOT(process_list_shortcuts_response(uint, QVariantMap)));
 }
 
-QString
-wayland_shortcut::obtain_protol_window_handler(QWindow* w)
-{
-  // TODO: Private API could be gone
-  if (const auto services = dynamic_cast<QGenericUnixServices*>(
-        QGuiApplicationPrivate::platformIntegration()->services())) {
-    return services->portalWindowIdentifier(w).toUtf8().constData();
-  }
-}
+
 
 void
 wayland_shortcut::process_create_session_response(uint i,
@@ -105,8 +95,6 @@ wayland_shortcut::process_create_session_response(uint i,
                                    "org.freedesktop.portal.GlobalShortcuts",
                                    "BindShortcuts");
 
-  QList<QVariant> bind_shortcut_args;
-  bind_shortcut_args.append(session_obj_path);
 
   Shortcuts shortcuts;
 
@@ -135,17 +123,17 @@ wayland_shortcut::process_create_session_response(uint i,
   shortcuts.append(a_shortcut);
   shortcuts.append(b_shortcut);
 
-  bind_shortcut_args.append(QVariant::fromValue(shortcuts));
-  bind_shortcut_args.append(
-    protol_window_handler_id); // Wayland window id, could be empty for now??
-                               // (useless so far)
-
   QMap<QString, QVariant> bind_opts;
   bind_opts.insert("handle_token", handle_token);
 
-  bind_shortcut_args.append(bind_opts);
 
+  QList<QVariant> bind_shortcut_args;
+  bind_shortcut_args.append(session_obj_path);
+  bind_shortcut_args.append(QVariant::fromValue(shortcuts));
+  bind_shortcut_args.append(myXdgExported->m_handle);
+  bind_shortcut_args.append(bind_opts);
   bind_shortcut.setArguments(bind_shortcut_args);
+
   qDebug() << "input of bind->" << bind_shortcut.arguments();
 
   QDBusMessage bind_ret = QDBusConnection::sessionBus().call(bind_shortcut);
